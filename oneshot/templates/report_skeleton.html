@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>障害解析報告書 QA#{{QA_NO}}</title>
+<style>
+  :root{
+    --c-main:#1f3a5f; --c-accent:#2f6db5; --c-bg:#f4f6f9; --c-card:#ffffff;
+    --c-bad:#c0392b; --c-bad-bg:#fdecea; --c-good:#1e7e44; --c-good-bg:#e7f6ec;
+    --c-warn:#b8860b; --c-warn-bg:#fff8e1; --c-border:#d7dde5; --c-text:#222b36;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--c-bg);color:var(--c-text);
+    font-family:"Yu Gothic","Meiryo","Hiragino Kaku Gothic ProN",sans-serif;
+    line-height:1.8;font-size:15px;}
+  header{background:linear-gradient(135deg,var(--c-main),var(--c-accent));color:#fff;
+    padding:32px 40px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  header .tag{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);
+    border-radius:4px;padding:2px 12px;font-size:13px;margin-bottom:10px;letter-spacing:1px;}
+  header h1{margin:6px 0 4px;font-size:23px;font-weight:700;}
+  header .sub{font-size:14px;opacity:.92;}
+  main{max-width:1080px;margin:0 auto;padding:28px 20px 80px;}
+  section{background:var(--c-card);border:1px solid var(--c-border);border-radius:10px;
+    padding:26px 30px;margin-bottom:26px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  h2{color:var(--c-main);font-size:20px;border-left:6px solid var(--c-accent);
+    padding-left:12px;margin:0 0 18px;}
+  h3{color:var(--c-accent);font-size:17px;margin:22px 0 10px;
+    border-bottom:1px dashed var(--c-border);padding-bottom:6px;}
+  h4{font-size:15px;margin:16px 0 6px;color:var(--c-main);}
+  p{margin:8px 0;}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;}
+  th,td{border:1px solid var(--c-border);padding:8px 12px;text-align:left;vertical-align:top;}
+  th{background:#eef3f9;color:var(--c-main);white-space:nowrap;}
+  code{background:#eef1f5;border-radius:4px;padding:1px 6px;font-family:"Consolas","Courier New",monospace;
+    font-size:13px;color:#933;}
+  pre{background:#1e2530;color:#e6edf3;border-radius:8px;padding:16px 18px;overflow:auto;
+    font-family:"Consolas","Courier New",monospace;font-size:13px;line-height:1.6;margin:10px 0;
+    white-space:pre-wrap;word-break:break-word;}
+  pre.before{border-left:5px solid var(--c-bad);}
+  pre.after{border-left:5px solid var(--c-good);}
+  .pill{display:inline-block;border-radius:12px;padding:1px 12px;font-size:12px;font-weight:700;color:#fff;}
+  .pill-bad{background:var(--c-bad);} .pill-good{background:var(--c-good);} .pill-warn{background:var(--c-warn);}
+  .box{border-radius:8px;padding:14px 18px;margin:12px 0;}
+  .box-bad{background:var(--c-bad-bg);border:1px solid #f0b5ae;}
+  .box-good{background:var(--c-good-bg);border:1px solid #b6dfc4;}
+  .box-warn{background:var(--c-warn-bg);border:1px solid #ecd9a0;}
+  .filepath{font-family:"Consolas","Courier New",monospace;font-size:12.5px;color:#2f6db5;word-break:break-all;}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px;}
+  li{margin:5px 0;}
+  .meta{display:grid;grid-template-columns:150px 1fr;gap:0;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;}
+  .meta div{padding:8px 14px;border-bottom:1px solid var(--c-border);}
+  .meta .k{font-weight:700;color:var(--c-main);background:#eef3f9 !important;}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;}
+  .flow .node{background:#eef3f9;border:1px solid var(--c-accent);border-radius:6px;padding:8px 12px;font-size:13px;}
+  .flow .arrow{color:var(--c-accent);font-weight:700;}
+  .note{font-size:12.5px;color:#5a6675;}
+  footer{text-align:center;color:#8a94a3;font-size:12px;padding:20px;}
+  .badnode{border-color:var(--c-bad)!important;background:var(--c-bad-bg)!important;}
+</style>
+</head>
+<body>
+<header>
+  <span class="tag">障害解析報告書 / RCA</span>
+  <h1>QA#{{QA_NO}}　{{件名}}</h1>
+  <div class="sub">対象システム：{{システム名}} ／ 画面・処理：{{画面・処理}} ／ お客様：{{お客様}} ／ 作成日：{{作成日}}</div>
+</header>
+<main>
+
+<!-- ============ 0. エグゼクティブサマリ ============ -->
+<section>
+  <h2>0. エグゼクティブサマリ</h2>
+  <div class="meta">
+    <div class="k">QA番号</div><div>#{{QA_NO}}</div>
+    <div class="k">件名</div><div>{{件名}}</div>
+    <div class="k">お客様 / 発生環境</div><div>{{お客様}} / {{発生環境}}</div>
+    <div class="k">画面・処理・帳票</div><div>{{画面・処理・帳票}}</div>
+    <div class="k">発生リビジョン</div><div>{{リビジョン}}</div>
+    <div class="k">依頼区分 / 優先度</div><div>{{依頼区分}} / {{優先度}}</div>
+    <div class="k">事象</div><div>{{事象の要約}}</div>
+    <div class="k">直接原因</div><div>{{直接原因1行サマリ。該当関数は<code>関数名</code>で示す}}</div>
+    <div class="k">根本原因</div><div>{{根本原因1行サマリ}}</div>
+    <div class="k">区分</div><div><span class="pill pill-bad">{{プログラム不具合／仕様／環境／データ 等}}</span></div>
+  </div>
+  <div class="box box-bad"><strong>結論：</strong>{{結論。コードのバグか否か、どこをどう直すか}}</div>
+</section>
+
+<!-- ============ 1. 直接原因（プログラム観点） ============ -->
+<section>
+  <h2>1. 直接原因（プログラム観点）</h2>
+
+  <h3>1-1. 該当ソースコード（実コード引用）</h3>
+  <p class="filepath">{{相対パス/ファイル名}}</p>
+  <p>{{どの処理・ロジックで誤判定／不具合が起きたかの説明}}</p>
+<pre class="before">{{該当する実コードを引用。改変せずそのまま貼る。問題箇所に -- ← コメント を付す}}</pre>
+  <div class="box box-bad"><strong>問題点：</strong>
+  <ol>
+    <li>{{問題点1}}</li>
+    <li>{{問題点2}}</li>
+  </ol></div>
+
+  <h3>1-2. 処理フロー（任意：誤判定に至る流れ）</h3>
+  <div class="flow">
+    <span class="node">{{入力／トリガ}}</span><span class="arrow">→</span>
+    <span class="node badnode">{{誤判定が起きる箇所}}</span><span class="arrow">→</span>
+    <span class="node">{{結果（空白／異常値 等）}}</span>
+  </div>
+</section>
+
+<!-- ============ 2. 根本原因（設計・プロセス観点） ============ -->
+<section>
+  <h2>2. 根本原因（設計・プロセス観点）</h2>
+
+  <h3>2-1. なぜ発生したか</h3>
+  <ul>
+    <li><strong>{{観点1}}：</strong>{{説明}}</li>
+    <li><strong>{{観点2}}：</strong>{{説明}}</li>
+  </ul>
+  <h3>2-2. なぜ事前に問題と判断されなかったか</h3>
+  <div class="box box-warn">{{テスト観点漏れ・移行漏れ等の説明}}</div>
+  <h3>2-3. 設計上の前提・業務仕様の誤認</h3>
+  <table>
+    <tr><th>観点</th><th>本来あるべき仕様</th><th>実装上の誤認</th></tr>
+    <tr><td>{{観点}}</td><td>{{あるべき}}</td><td>{{誤認}}</td></tr>
+  </table>
+</section>
+
+<!-- ============ 3. 修正案（変更前後） ============ -->
+<section>
+  <h2>3. 修正案（変更前後）</h2>
+
+  <p>修正方針は <strong>「{{修正方針の一文}}」</strong>こと。</p>
+
+  <h3>3-1. {{修正項目1}}</h3>
+  <h4>(1) 変更前ロジック</h4>
+<pre class="before">{{変更前の実コード}}</pre>
+  <h4>(2) 変更後ロジック</h4>
+<pre class="after">{{変更後のコード（提案）}}</pre>
+
+  <div class="box box-good"><span class="pill pill-good">改善点</span>
+  <ul>
+    <li>{{改善点1}}</li>
+    <li>{{改善点2}}</li>
+  </ul></div>
+  <p class="note">※ {{テーブル定義・定数値は実定義に合わせ確定すること等の注記}}</p>
+</section>
+
+<!-- ============ 4. 再発防止策 ============ -->
+<section>
+  <h2>4. 再発防止策</h2>
+  <h3>4-1. プログラム</h3>
+  <table>
+    <tr><th>No</th><th>対策</th><th>目的</th></tr>
+    <tr><td>P-1</td><td>{{対策}}</td><td>{{目的}}</td></tr>
+  </table>
+  <h3>4-2. テスト</h3>
+  <ul>
+    <li>{{テスト観点1}}</li>
+    <li>{{テスト観点2}}</li>
+  </ul>
+</section>
+
+<!-- ============ 5. 参照ソースファイル一覧 ============ -->
+<section>
+  <h2>5. 参照ソースファイル一覧</h2>
+  <table>
+    <tr><th>層</th><th>ファイル</th><th>役割／該当箇所</th></tr>
+    <tr><td>{{PL/SQL／Java 等}}</td><td class="filepath">{{パス}}</td><td>{{該当関数・行}}</td></tr>
+  </table>
+  <p class="note">※ ソースコードの文字コード（Shift-JIS 等）・行番号・カラム定義は調査時点のもの。最終確定時はテーブル定義書・設計書と照合のうえ確認すること。</p>
+</section>
+
+</main>
+<footer>障害解析報告書 QA#{{QA_NO}} ／ {{システム名}} ／ 自動生成（要レビュー）</footer>
+</body>
+</html>

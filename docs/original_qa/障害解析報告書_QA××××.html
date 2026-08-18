@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>障害解析報告書</title>
+<style>
+  :root{
+    --c-main:#1f3a5f; --c-accent:#2f6db5; --c-bg:#f4f6f9; --c-card:#ffffff;
+    --c-bad:#c0392b; --c-bad-bg:#fdecea; --c-good:#1e7e44; --c-good-bg:#e7f6ec;
+    --c-warn:#b8860b; --c-warn-bg:#fff8e1; --c-border:#d7dde5; --c-text:#222b36;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--c-bg);color:var(--c-text);
+    font-family:"Yu Gothic","Meiryo","Hiragino Kaku Gothic ProN",sans-serif;
+    line-height:1.8;font-size:15px;}
+  header{background:linear-gradient(135deg,var(--c-main),var(--c-accent));color:#fff;
+    padding:32px 40px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  header .tag{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);
+    border-radius:4px;padding:2px 12px;font-size:13px;margin-bottom:10px;letter-spacing:1px;}
+  header h1{margin:6px 0 4px;font-size:23px;font-weight:700;}
+  header .sub{font-size:14px;opacity:.92;}
+  main{max-width:1080px;margin:0 auto;padding:28px 20px 80px;}
+  section{background:var(--c-card);border:1px solid var(--c-border);border-radius:10px;
+    padding:26px 30px;margin-bottom:26px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  h2{color:var(--c-main);font-size:20px;border-left:6px solid var(--c-accent);
+    padding-left:12px;margin:0 0 18px;}
+  h3{color:var(--c-accent);font-size:17px;margin:22px 0 10px;
+    border-bottom:1px dashed var(--c-border);padding-bottom:6px;}
+  h4{font-size:15px;margin:16px 0 6px;color:var(--c-main);}
+  p{margin:8px 0;}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;}
+  th,td{border:1px solid var(--c-border);padding:8px 12px;text-align:left;vertical-align:top;}
+  th{background:#eef3f9;color:var(--c-main);white-space:nowrap;}
+  code{background:#eef1f5;border-radius:4px;padding:1px 6px;font-family:"Consolas","Courier New",monospace;
+    font-size:13px;color:#933;}
+  pre{background:#1e2530;color:#e6edf3;border-radius:8px;padding:16px 18px;overflow:auto;
+    font-family:"Consolas","Courier New",monospace;font-size:13px;line-height:1.6;margin:10px 0;
+    white-space:pre-wrap;word-break:break-word;}
+  pre.before{border-left:5px solid var(--c-bad);}
+  pre.after{border-left:5px solid var(--c-good);}
+  .pill{display:inline-block;border-radius:12px;padding:1px 12px;font-size:12px;font-weight:700;color:#fff;}
+  .pill-bad{background:var(--c-bad);} .pill-good{background:var(--c-good);} .pill-warn{background:var(--c-warn);}
+  .box{border-radius:8px;padding:14px 18px;margin:12px 0;}
+  .box-bad{background:var(--c-bad-bg);border:1px solid #f0b5ae;}
+  .box-good{background:var(--c-good-bg);border:1px solid #b6dfc4;}
+  .box-warn{background:var(--c-warn-bg);border:1px solid #ecd9a0;}
+  .filepath{font-family:"Consolas","Courier New",monospace;font-size:12.5px;color:#2f6db5;word-break:break-all;}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px;}
+  li{margin:5px 0;}
+  .meta{display:grid;grid-template-columns:150px 1fr;gap:0;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;}
+  .meta div{padding:8px 14px;border-bottom:1px solid var(--c-border);}
+  .meta .k{font-weight:700;color:var(--c-main);background:#eef3f9 !important;}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;}
+  .flow .node{background:#eef3f9;border:1px solid var(--c-accent);border-radius:6px;padding:8px 12px;font-size:13px;}
+  .flow .arrow{color:var(--c-accent);font-weight:700;}
+  .note{font-size:12.5px;color:#5a6675;}
+  footer{text-align:center;color:#8a94a3;font-size:12px;padding:20px;}
+  .badnode{border-color:var(--c-bad)!important;background:var(--c-bad-bg)!important;}
+</style>
+</head>
+<body>
+<header>
+  <span class="tag">障害解析報告書 / RCA</span>
+  <h1>QA#××××　××××に関わる証明書の××××計算で××××金額が常に空白で表示される</h1>
+  <div class="sub">対象システム：固定資産税システム（W××××××1.1）／ 画面・処理：証明書発行（××××書／××××書／××××××書）／ お客様：××市 ／ 作成日：2026-06-17</div>
+</header>
+<main>
+<section>
+  <h2>0. エグゼクティブサマリ</h2>
+  <div class="meta">
+    <div class="k">QA番号</div><div>#3××××</div>
+    <div class="k">件名</div><div>××××に関わる証明書の×××計算で×××××が常に空白で表示される</div>
+    <div class="k">お客様 / 発生環境</div><div>××市 / お客様環境-本番機</div>
+    <div class="k">画面・処理・帳票</div><div>証明書発行（評価証明書／公課証明書／××××資産証明書）</div>
+    <div class="k">発生リビジョン</div><div>1.0.×××.×××</div>
+    <div class="k">依頼区分 / 優先度</div><div>不具合 / 今すぐ</div>
+    <div class="k">事象</div><div>×××発行設定を入れて××××資産に関わる証明書を発行しても、×××××が常に空白で表示される（×××××が算出されない）。</div>
+    <div class="k">直接原因</div><div>証明書××××件数計算 <code>×××××</code> は件数集計の対象を <strong>土地（×××××_KBN='土地'）と家屋（'家屋'）のみ</strong>に限定しており、<strong>××××の分岐が存在しない</strong>。×××××では件数が0となり×××が空白になる。</div>
+    <div class="k">根本原因</div><div>×××××××の設計時に××××資産の証明書種別が考慮されておらず、××××件数集計のSQL生成（FUNC_SQL_CRE_xx）が土地・家屋前提で作られている。</div>
+    <div class="k">区分</div><div><span class="pill pill-bad">プログラム不具合（考慮漏れ）</span></div>
+  </div>
+  <div class="box box-bad"><strong>結論：</strong><code>×××××××</code> に××××資産の件数集計分岐を追加し、×××××が××××計算ルートを通るよう呼出側の帳票種別判定も併せて修正する必要がある。</div>
+</section>
+<section>
+  <h2>1. 直接原因（プログラム観点）</h2>
+
+  <h3>1-1. 該当ソースコード（実コード引用）</h3>
+  <p class="filepath">01SQL/FUNCTION/×××××.SQL</p>
+  <p>件数集計用のSQL生成サブ関数は、<strong>土地</strong>と<strong>家屋</strong>の××××に対してのみ定義されている。</p>
+<pre class="before">-- 土地の××取得（連名帳用）
+FUNCTION FUNC_SQL_CRE_02(...) IS BEGIN
+  I_VSQL := 'SELECT COUNT(*) FROM (SELECT OOAZA_MEISHO,KOAZA_MEISHO,CHIBAN '
+         || ' FROM ' || I_VTBLNAME
+         || ' WHERE ××××_KBN = ''土地'')';        -- ← 土地のみ
+END;
+
+-- 家屋の件数取得
+FUNCTION FUNC_SQL_CRE_03(...) IS BEGIN
+  I_VSQL := 'SELECT COUNT(*) FROM ' || I_VTBLNAME
+         || ' WHERE ××××_KBN = ''家屋''';          -- ← 家屋のみ
+END;
+
+-- ※ ××××資産（××××_KBN = '××××'）に対応する集計分岐は存在しない</pre>
+  <div class="box box-bad"><strong>問題点：</strong>
+  <ol>
+    <li>××××件数の集計が土地・家屋の物件区分に限定され、××××資産の件数が常に0となる。</li>
+    <li>件数0 → ××××金額が算出されず帳票上は空白になる。</li>
+    <li>QA記載の通り「そもそも <code>×××××××</code> に処理が入ってこない」可能性があり、××××証明書が××××計算の呼出ルート自体に乗っていない（呼出側の帳票種別分岐漏れ）ことも疑われる。</li>
+  </ol></div>
+
+</section>
+<section>
+  <h2>2. 根本原因（設計・プロセス観点）</h2>
+
+  <h3>2-1. なぜ計算漏れが発生したか</h3>
+  <ul>
+    <li><strong>証明書種別の網羅漏れ：</strong>××××計算の対象として土地・家屋証明書のみを想定し、××××××（評価／公課／××××資産）の×××××が設計段階で抜けていた。</li>
+    <li><strong>共通化の不徹底：</strong>物件区分ごとの件数集計が個別のSQL生成関数に分散し、区分追加時の影響範囲が見えにくい。</li>
+  </ul>
+  <h3>2-2. なぜ事前に問題と判断されなかったか</h3>
+  <div class="box box-warn">土地・家屋の証明書で×××が正しく算出されることは確認されたが、<u>×××××の×××発行</u>という組み合わせがテスト観点から抜けていた。×××××を入れた状態での×××××発行が試験されていない。</div>
+  <h3>2-3. 設計上の前提・業務仕様の誤認</h3>
+  <table><tr><th>観点</th><th>本来あるべき仕様</th><th>実装上の誤認</th></tr>
+  <tr><td>対象証明書</td><td>土地・家屋・××××の全種別</td><td>土地・家屋のみ</td></tr>
+  <tr><td>件数0時の表示</td><td>××××0でも明示</td><td>空白で潜在化</td></tr>
+  </table>
+
+</section>
+<section>
+  <h2>3. 修正案（変更前後）</h2>
+
+  <p>修正方針は <strong>「××××資産の××××件数集計分岐を追加し、××××証明書が××××計算を通るようにする」</strong>こと。</p>
+  <h3>3-1. ××××資産の件数集計分岐を追加</h3>
+  <h4>(1) 変更前ロジック</h4>
+<pre class="before">-- 土地・家屋のみ（××××の分岐なし）
+FUNCTION FUNC_SQL_×××_03(I_VTBLNAME IN NVARCHAR2, I_VSQL OUT VARCHAR2) ...
+  I_VSQL := 'SELECT COUNT(*) FROM ' || I_VTBLNAME
+         || ' WHERE BUKKEN_KBN = ''家屋''';</pre>
+  <h4>(2) 変更後ロジック</h4>
+<pre class="after">-- ××××資産の件数取得を追加
+FUNCTION FUNC_SQL_CRE_SHOKYAKU(I_VTBLNAME IN NVARCHAR2, I_VSQL OUT VARCHAR2)
+  RETURN PLS_INTEGER IS IRTN PLS_INTEGER; BEGIN
+  IRTN := 0;
+  I_VSQL := 'SELECT COUNT(*) FROM ' || I_××××
+         || ' WHERE BUKKEN_KBN = ''××××''';   -- ××××資産を集計対象に
+  RETURN IRTN;
+END FUNC_SQL_CRE_×××××;
+
+-- メイン側：帳票番号（証明書種別）が××××資産証明書のとき本関数を呼び O_NK_KENSU 等へ反映</pre>
+  <h3>3-2. 呼出側（帳票種別ルーティング）の確認・修正</h3>
+<pre class="after">-- ××××資産証明書（評価証明書・公課証明書・××××資産証明書）の帳票でも
+-- ××××計算 ZEBFKSHMTSRY を呼ぶようにルーティングを追加する。
+IF v_chohyo_kbn IN (C_HYOKA_SHO_SHOKYAKU, C_KOKA_SHO_SHOKYAKU, C_SHOKYAKU_SHO) THEN
+  IRET := ××××(I_VCHOHYO_NO, I_VTBLNAME, O_NTSUCHI_NO, O_NMAISU, O_NT_KENSU, O_NK_KENSU);
+END IF;</pre>
+  <div class="box box-good"><span class="pill pill-good">改善点</span>
+  <ul>
+    <li>××××資産証明書でも××××件数が集計され、××××金額が正しく表示される。</li>
+    <li>証明書種別ごとのルーティングを明示し、対象漏れを防止。</li>
+  </ul></div>
+  <p class="note">※ 物件区分の格納値（'××××' 等）と帳票種別定数は実テーブル・呼出元の定義に合わせて確定すること。</p>
+
+</section>
+<section>
+  <h2>4. 再発防止策</h2>
+
+  <h3>4-1. プログラム</h3>
+  <table><tr><th>No</th><th>対策</th><th>目的</th></tr>
+  <tr><td>P-1</td><td>××××資産の××××件数集計分岐を追加</td><td>××××証明書の××××算出</td></tr>
+  <tr><td>P-2</td><td>証明書種別→××××計算のルーティングを一元管理</td><td>対象漏れの防止</td></tr>
+  </table>
+  <h3>4-2. テスト</h3>
+  <ul><li>××××設定ありで土地・家屋・××××の各証明書を発行し××××金額を確認。</li>
+  <li>件数0件時に空白ではなく0円が明示されることを確認。</li></ul>
+
+</section>
+<section>
+  <h2>5. 参照ソースファイル一覧</h2>
+
+  <table><tr><th>層</th><th>ファイル</th><th>役割／該当箇所</th></tr>
+  <tr><td>PL/SQL</td><td class="filepath">01.release/.../FUNCTION/×××××.SQL</td><td>××××_02/03/04（土地・家屋のみ。××××分岐なし）</td></tr>
+  <tr><td>呼出元</td><td class="filepath">証明書発行（帳票種別ルーティング）</td><td>××××証明書が××××計算を呼んでいない可能性</td></tr>
+  </table>
+
+  <p class="note">※ PL/SQLソースはShift-JIS（コメントが一部文字化け）。行番号・カラム定義は調査時点のものであり、最終確定時はテーブル定義書・設計書と照合のうえ確認すること。</p>
+</section>
+<footer>障害解析報告書 QA#×××× ／ 固定資産税システム W××××.1 ／ 自動生成（要レビュー）</footer>
+</main>
+</body>
+</html>

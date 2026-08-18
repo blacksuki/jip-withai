@@ -1,0 +1,29 @@
+CREATE OR REPLACE PACKAGE BODY PKG_SHOMEISHO_KENSU IS
+
+  -- 土地の件数取得（連名帳用）
+  FUNCTION FUNC_SQL_CRE_02(I_VTBLNAME IN NVARCHAR2, I_VSQL OUT VARCHAR2)
+    RETURN PLS_INTEGER IS
+    IRTN PLS_INTEGER;
+  BEGIN
+    IRTN := 0;
+    I_VSQL := 'SELECT COUNT(*) FROM (SELECT OOAZA_MEISHO,KOAZA_MEISHO,CHIBAN '
+           || ' FROM ' || I_VTBLNAME
+           || ' WHERE BUKKEN_KBN = ''土地'')';   -- tochi only
+    RETURN IRTN;
+  END FUNC_SQL_CRE_02;
+
+  -- 家屋の件数取得
+  FUNCTION FUNC_SQL_CRE_03(I_VTBLNAME IN NVARCHAR2, I_VSQL OUT VARCHAR2)
+    RETURN PLS_INTEGER IS
+    IRTN PLS_INTEGER;
+  BEGIN
+    IRTN := 0;
+    I_VSQL := 'SELECT COUNT(*) FROM ' || I_VTBLNAME
+           || ' WHERE BUKKEN_KBN = ''家屋''';     -- kaoku only
+    RETURN IRTN;
+  END FUNC_SQL_CRE_03;
+
+  -- NOTE: shokyaku shisan (BUKKEN_KBN = 'shokyaku') no shukei bunki wa sonzai shinai
+
+END PKG_SHOMEISHO_KENSU;
+/
