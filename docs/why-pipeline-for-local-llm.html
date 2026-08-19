@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ローカルLLMでも高品質を実現する仕組みのご説明</title>
+<style>
+  :root{
+    --main:#1f3a5f; --acc:#2f6db5; --bg:#f4f6f9; --card:#fff;
+    --bad:#c0392b; --bad-bg:#fdecea; --good:#1e7e44; --good-bg:#e7f6ec;
+    --warn:#b8860b; --warn-bg:#fff8e1; --bd:#d7dde5; --text:#222b36;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Yu Gothic","Meiryo","Hiragino Kaku Gothic ProN",sans-serif;
+    line-height:1.9;font-size:15.5px}
+  header{background:linear-gradient(135deg,var(--main),var(--acc));color:#fff;padding:40px 44px}
+  header .tag{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.5);
+    border-radius:4px;padding:3px 14px;font-size:13px;margin-bottom:12px;letter-spacing:1px}
+  header h1{margin:8px 0 6px;font-size:25px;font-weight:700;line-height:1.5}
+  header .sub{font-size:14.5px;opacity:.93}
+  main{max-width:940px;margin:0 auto;padding:30px 22px 90px}
+  section{background:var(--card);border:1px solid var(--bd);border-radius:12px;
+    padding:30px 36px;margin-bottom:26px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  h2{color:var(--main);font-size:21px;border-left:7px solid var(--acc);
+    padding-left:14px;margin:0 0 20px;line-height:1.5}
+  h3{color:var(--acc);font-size:17px;margin:26px 0 12px;border-bottom:1px dashed var(--bd);padding-bottom:7px}
+  p{margin:12px 0}
+  .lead{font-size:16.5px;color:#2b3a4d}
+  strong{color:var(--main)}
+  .keybox{background:linear-gradient(135deg,#eef3f9,#e3ecf7);border:1px solid #cfe0f0;
+    border-left:6px solid var(--acc);border-radius:10px;padding:20px 24px;margin:20px 0;font-size:16px}
+  .keybox .big{font-size:19px;font-weight:700;color:var(--main);display:block;margin-bottom:6px}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14.5px}
+  th,td{border:1px solid var(--bd);padding:10px 14px;text-align:left;vertical-align:top}
+  th{background:#eef3f9;color:var(--main);white-space:nowrap}
+  .box{border-radius:9px;padding:16px 20px;margin:16px 0}
+  .box-good{background:var(--good-bg);border:1px solid #b6dfc4}
+  .box-warn{background:var(--warn-bg);border:1px solid #ecd9a0}
+  .box-bad{background:var(--bad-bg);border:1px solid #f0b5ae}
+  .pill{display:inline-block;border-radius:12px;padding:2px 13px;font-size:12.5px;font-weight:700;color:#fff}
+  .pill-good{background:var(--good)} .pill-bad{background:var(--bad)} .pill-warn{background:var(--warn)}
+  ul,ol{margin:10px 0 10px 4px;padding-left:24px} li{margin:7px 0}
+  /* 4ステップの流れ図 */
+  .flow{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0}
+  .step{flex:1;min-width:180px;background:#f8fafc;border:1px solid var(--bd);border-top:4px solid var(--acc);
+    border-radius:9px;padding:16px 18px}
+  .step .no{display:inline-block;background:var(--acc);color:#fff;border-radius:50%;width:26px;height:26px;
+    text-align:center;line-height:26px;font-weight:700;font-size:14px;margin-bottom:8px}
+  .step .t{font-weight:700;color:var(--main);font-size:15px;margin-bottom:4px}
+  .step .d{font-size:13.5px;color:#4a5568;line-height:1.7}
+  .step .tag2{display:inline-block;margin-top:8px;font-size:11.5px;background:#eef3f9;color:var(--acc);
+    border-radius:4px;padding:1px 8px}
+  .analogy{background:#fbfcfe;border:1px dashed var(--acc);border-radius:9px;padding:16px 22px;margin:18px 0;font-size:15px}
+  .analogy .lbl{font-weight:700;color:var(--acc);font-size:13.5px;letter-spacing:.5px}
+  .note{font-size:13px;color:#5a6675}
+  footer{text-align:center;color:#8a94a3;font-size:12.5px;padding:24px}
+  .compare{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0}
+  .compare>div{flex:1;min-width:260px;border-radius:10px;padding:18px 22px}
+  .c-before{background:var(--bad-bg);border:1px solid #f0b5ae}
+  .c-after{background:var(--good-bg);border:1px solid #b6dfc4}
+  .compare h4{margin:0 0 10px;font-size:15px}
+  .c-before h4{color:var(--bad)} .c-after h4{color:var(--good)}
+</style>
+</head>
+<body>
+<header>
+  <span class="tag">技術ご説明資料</span>
+  <h1>なぜ「ローカル部署の小さめモデル」でも<br>高品質な障害解析が実現できるのか</h1>
+  <div class="sub">— セキュリティのためのローカル部署と、品質を担保する「仕組み（エンジニアリング）」について —</div>
+</header>
+<main>
+
+<!-- 0. 요약 -->
+<section>
+  <h2>0. はじめに（本資料の要点）</h2>
+  <p class="lead">
+    お客様の重要なソースコードやデータは、外部のクラウドに送らず、<strong>お客様環境内のローカルサーバーで完結</strong>させる必要があります。
+    これは<strong>セキュリティ上の必須要件</strong>です。
+  </p>
+  <p class="lead">
+    一方で、ローカルサーバーで動かせるAIモデルは、世界最高峰のクラウドモデルに比べると「頭の良さ（知能）」で一歩譲ります。
+    そこで私たちは、<strong>不足を『モデルの知能』ではなく『仕組み（作業工程の設計）』で補う</strong>アプローチを取ります。
+  </p>
+  <div class="keybox">
+    <span class="big">本資料でお伝えしたいこと</span>
+    分析の品質は、<strong>「モデルの知能」だけで決まるのではありません。</strong>
+    適切に設計された作業工程（パイプライン）を通すことで、<strong>ローカルの中規模モデルでも、最高峰モデルに迫る品質</strong>を安定的に引き出せます。
+    実際の検証でも、これを確認済みです（第4章）。
+  </div>
+</section>
+
+<!-- 1. 왜 로컬 -->
+<section>
+  <h2>1. なぜ「ローカル部署」が必要なのか（セキュリティ）</h2>
+  <p>
+    金融・保険業のシステムでは、ソースコードや障害データそのものが機密情報です。
+    これらを外部クラウドのAIサービスへ送信することは、情報管理・コンプライアンスの観点から通常許容されません。
+  </p>
+  <table>
+    <tr><th>方式</th><th>データの流れ</th><th>セキュリティ</th></tr>
+    <tr>
+      <td>クラウドAI（外部送信）</td>
+      <td>コード・データが社外のサーバーへ出る</td>
+      <td><span class="pill pill-bad">リスク大</span></td>
+    </tr>
+    <tr>
+      <td><strong>ローカル部署（本方式）</strong></td>
+      <td>すべてお客様環境内で完結。外部に一切出ない</td>
+      <td><span class="pill pill-good">安全</span></td>
+    </tr>
+  </table>
+  <div class="box box-good">
+    <strong>結論：</strong>セキュリティ要件を満たすため、AIモデルは<strong>お客様環境内のローカルサーバーに部署</strong>します。この前提は動かせません。
+  </div>
+</section>
+
+<!-- 2. 代價 -->
+<section>
+  <h2>2. ローカル部署の「代償」と、その正しい捉え方</h2>
+  <p>
+    ローカルサーバーのGPU（画像処理装置）の容量には上限があります。そのため、そこで動かせるのは
+    <strong>中規模モデル（例：27B＝270億パラメータ級）</strong>です。
+    世界最高峰の超大型クラウドモデルと比べると、単体の「地頭の良さ」は一段譲ります。
+  </p>
+
+  <div class="analogy">
+    <span class="lbl">たとえるなら</span><br>
+    超大型クラウドモデルが「経験豊富なベテラン専門家」だとすれば、ローカルの中規模モデルは「優秀だが経験の浅い若手技術者」です。<br>
+    若手は、<strong>いきなり9,000ファイルの中から一発で真因を見抜く</strong>ような芸当は苦手です。しかし——<br>
+    <strong>手順書（チェックリスト）と作業分担が整っていれば、ベテランに迫る成果を出せます。</strong>これが本方式の核心です。
+  </div>
+
+  <div class="box box-warn">
+    <strong>よくある誤解：</strong>「小さいモデル＝品質が低い」——これは<strong>使い方次第</strong>です。
+    モデルに<strong>いきなり全部を丸投げ</strong>すれば品質は落ちますが、
+    <strong>工程を分けて的確に導けば</strong>、品質は大きく変わります。
+  </div>
+</section>
+
+<!-- 3. 파이프라인 -->
+<section>
+  <h2>3. 品質を「仕組み」で引き上げる — 4段階パイプライン</h2>
+  <p>
+    私たちは、ベテランが頭の中で一気にやることを、<strong>4つの工程に分解</strong>し、
+    各工程で若手（＝ローカルモデル）に<strong>一度に一つのことだけ</strong>をやらせます。
+    「賢さ」ではなく「工程の確実性」で品質を担保する考え方です。
+  </p>
+
+  <div class="flow">
+    <div class="step">
+      <span class="no">0</span>
+      <div class="t">検索（絞り込み）</div>
+      <div class="d">障害内容から手がかり語を抽出し、プログラムで9,000ファイルを数件に自動で絞る。</div>
+      <span class="tag2">AIを使わない・確実</span>
+    </div>
+    <div class="step">
+      <span class="no">1</span>
+      <div class="t">原因分析</div>
+      <div class="d">絞った数件だけを深く読む。<strong>必須チェックリスト</strong>で「見落としがちな観点」を強制的に確認させる。</div>
+      <span class="tag2">深く考えるモード</span>
+    </div>
+    <div class="step">
+      <span class="no">2</span>
+      <div class="t">修正案の作成</div>
+      <div class="d">前工程の分析結果をもとに、変更前後のコードを提示する。</div>
+      <span class="tag2">深く考えるモード</span>
+    </div>
+    <div class="step">
+      <span class="no">3</span>
+      <div class="t">報告書に整形</div>
+      <div class="d">分析結果を決まった書式のHTML報告書へ機械的に流し込む。考えさせないので書式が崩れない。</div>
+      <span class="tag2">考えさせない・確実</span>
+    </div>
+  </div>
+
+  <h3>各工程が「若手の弱点」をどう補うか</h3>
+  <table>
+    <tr><th>モデル単体の弱点</th><th>パイプラインでの補い方</th></tr>
+    <tr>
+      <td>大量のファイルから真因の場所を見つけるのが苦手（迷子になる）</td>
+      <td><strong>工程0の自動検索</strong>で、探す範囲を数千件→数件に機械的に絞る。「探す」仕事をモデルから取り上げる。</td>
+    </tr>
+    <tr>
+      <td>深い観点（見落とし・非対称な実装など）を自力で気づけないことがある</td>
+      <td><strong>工程1のチェックリスト</strong>で、ベテランが必ず確認する観点を「質問」として強制する。</td>
+    </tr>
+    <tr>
+      <td>長く複雑な指示を一度に渡すと、途中で崩れる／止まる</td>
+      <td><strong>工程を分割</strong>し、各工程では一度に一つのことだけをやらせる。</td>
+    </tr>
+    <tr>
+      <td>報告書の書式を自己流に崩してしまう</td>
+      <td><strong>工程3は機械的な穴埋め</strong>のみ。考えさせないため書式が安定する。</td>
+    </tr>
+  </table>
+</section>
+
+<!-- 4. 실증 -->
+<section>
+  <h2>4. 実証結果 — 「同じモデル」でも品質が変わる</h2>
+  <p>
+    私たちは、模擬した金融システムの障害ケース（約640行のPL/SQLに、実際の障害と同種の不具合を埋め込んだもの）で検証しました。
+    ポイントは、<strong>まったく同じ能力のモデルを使い、パイプラインの有無だけを変えた</strong>点です。
+  </p>
+
+  <div class="compare">
+    <div class="c-before">
+      <h4>■ モデルに丸投げ（パイプラインなし）</h4>
+      <ul>
+        <li>主要な原因は特定できた</li>
+        <li>しかし<strong>深い観点を1つ見落とした</strong><br>（「評価額の計算は新区分に対応済みなのに、件数の計算だけ未対応」という<strong>非対称な欠落</strong>）</li>
+      </ul>
+    </div>
+    <div class="c-after">
+      <h4>■ 同じモデル＋パイプライン</h4>
+      <ul>
+        <li>主要な原因を特定</li>
+        <li><strong>見落としていた「非対称な欠落」もチェックリストが検出</strong></li>
+        <li>報告書の書式も崩れず安定</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box box-good">
+    <strong>この結果が示すこと：</strong>
+    「丸投げ」で取りこぼした深い観点を、<strong>まったく同じモデルが、パイプラインのチェックリストを通すことで発見できた</strong>のです。
+    つまり品質を決めたのは<strong>モデルの知能ではなく、工程の設計</strong>でした。
+  </div>
+
+  <h3>参考：モデル規模ごとの向き・不向き（実測に基づく）</h3>
+  <table>
+    <tr><th>モデル規模</th><th>単体での複雑な障害解析</th><th>本方式での位置づけ</th></tr>
+    <tr>
+      <td>小型（7B〜8B級）</td>
+      <td><span class="pill pill-bad">不十分</span> 複雑な工程を最後までこなせない</td>
+      <td>補助的な単純作業に限定</td>
+    </tr>
+    <tr>
+      <td><strong>中規模（27B級・ローカル部署の中心）</strong></td>
+      <td><span class="pill pill-warn">要工夫</span> 単体では深い観点を取りこぼす</td>
+      <td><strong>パイプラインで高品質域へ引き上げ</strong></td>
+    </tr>
+    <tr>
+      <td>超大型（クラウド最高峰）</td>
+      <td><span class="pill pill-good">高い</span> 単体でも高品質</td>
+      <td>（セキュリティ制約で今回は不採用）</td>
+    </tr>
+  </table>
+  <p class="note">※ モデル名・数値は検証時点のもの。傾向を示す目的で簡略化しています。</p>
+</section>
+
+<!-- 5. 결론 -->
+<section>
+  <h2>5. まとめ — セキュリティと品質を両立する</h2>
+  <div class="keybox">
+    <span class="big">セキュリティは「ローカル部署」で、品質は「仕組み」で担保する。</span>
+    ローカル部署はセキュリティのための必須要件です。その制約下でも、
+    <strong>作業工程を正しく設計する（＝エンジニアリング）</strong>ことで、
+    品質をモデルの知能任せにせず、<strong>安定して高い水準へ引き上げられます。</strong>
+  </div>
+  <ul>
+    <li><strong>安全：</strong>コード・データはお客様環境の外に一切出ません。</li>
+    <li><strong>品質：</strong>検索の自動化・チェックリスト・工程分割により、中規模モデルでも深い観点まで押さえた報告書を安定生成。</li>
+    <li><strong>再現性：</strong>「賢いモデルが偶然うまくいく」ではなく、「工程が毎回同じ品質を保証する」方式です。</li>
+    <li><strong>発展性：</strong>お客様固有の障害パターンや業務ルールを工程に組み込むほど、品質はさらに向上します。</li>
+  </ul>
+  <div class="box box-good">
+    <strong>ひと言でいえば：</strong>
+    「モデルの知能に頼るのではなく、<strong>工程の確実性で品質を作る</strong>」。
+    だからこそ、セキュアなローカル環境でも、実務で使える品質をご提供できます。
+  </div>
+</section>
+
+</main>
+<footer>技術ご説明資料 ／ ローカルLLMによる障害解析ワークフロー ／ AI Team</footer>
+</body>
+</html>
