@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>障害解析報告書 QA#41001</title>
+<style>
+  :root{
+    --c-main:#1f3a5f; --c-accent:#2f6db5; --c-bg:#f4f6f9; --c-card:#ffffff;
+    --c-bad:#c0392b; --c-bad-bg:#fdecea; --c-good:#1e7e44; --c-good-bg:#e7f6ec;
+    --c-warn:#b8860b; --c-warn-bg:#fff8e1; --c-border:#d7dde5; --c-text:#222b36;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--c-bg);color:var(--c-text);
+    font-family:"Yu Gothic","Meiryo","Hiragino Kaku Gothic ProN",sans-serif;
+    line-height:1.8;font-size:15px;}
+  header{background:linear-gradient(135deg,var(--c-main),var(--c-accent));color:#fff;
+    padding:32px 40px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  header .tag{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);
+    border-radius:4px;padding:2px 12px;font-size:13px;margin-bottom:10px;letter-spacing:1px;}
+  header h1{margin:6px 0 4px;font-size:23px;font-weight:700;}
+  header .sub{font-size:14px;opacity:.92;}
+  main{max-width:1080px;margin:0 auto;padding:28px 20px 80px;}
+  section{background:var(--c-card);border:1px solid var(--c-border);border-radius:10px;
+    padding:26px 30px;margin-bottom:26px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  h2{color:var(--c-main);font-size:20px;border-left:6px solid var(--c-accent);
+    padding-left:12px;margin:0 0 18px;}
+  h3{color:var(--c-accent);font-size:17px;margin:22px 0 10px;
+    border-bottom:1px dashed var(--c-border);padding-bottom:6px;}
+  h4{font-size:15px;margin:16px 0 6px;color:var(--c-main);}
+  p{margin:8px 0;}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;}
+  th,td{border:1px solid var(--c-border);padding:8px 12px;text-align:left;vertical-align:top;}
+  th{background:#eef3f9;color:var(--c-main);white-space:nowrap;}
+  code{background:#eef1f5;border-radius:4px;padding:1px 6px;font-family:"Consolas","Courier New",monospace;
+    font-size:13px;color:#933;}
+  pre{background:#1e2530;color:#e6edf3;border-radius:8px;padding:16px 18px;overflow:auto;
+    font-family:"Consolas","Courier New",monospace;font-size:13px;line-height:1.6;margin:10px 0;
+    white-space:pre-wrap;word-break:break-word;}
+  pre.before{border-left:5px solid var(--c-bad);}
+  pre.after{border-left:5px solid var(--c-good);}
+  .pill{display:inline-block;border-radius:12px;padding:1px 12px;font-size:12px;font-weight:700;color:#fff;}
+  .pill-bad{background:var(--c-bad);} .pill-good{background:var(--c-good);} .pill-warn{background:var(--c-warn);}
+  .box{border-radius:8px;padding:14px 18px;margin:12px 0;}
+  .box-bad{background:var(--c-bad-bg);border:1px solid #f0b5ae;}
+  .box-good{background:var(--c-good-bg);border:1px solid #b6dfc4;}
+  .box-warn{background:var(--c-warn-bg);border:1px solid #ecd9a0;}
+  .filepath{font-family:"Consolas","Courier New",monospace;font-size:12.5px;color:#2f6db5;word-break:break-all;}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px;}
+  li{margin:5px 0;}
+  .meta{display:grid;grid-template-columns:150px 1fr;gap:0;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;}
+  .meta div{padding:8px 14px;border-bottom:1px solid var(--c-border);}
+  .meta .k{font-weight:700;color:var(--c-main);background:#eef3f9 !important;}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;}
+  .flow .node{background:#eef3f9;border:1px solid var(--c-accent);border-radius:6px;padding:8px 12px;font-size:13px;}
+  .flow .arrow{color:var(--c-accent);font-weight:700;}
+  .note{font-size:12.5px;color:#5a6675;}
+  footer{text-align:center;color:#8a94a3;font-size:12px;padding:20px;}
+  .badnode{border-color:var(--c-bad)!important;background:var(--c-bad-bg)!important;}
+</style>
+</head>
+<body>
+<header>
+  <span class="tag">障害解析報告書 / RCA</span>
+  <h1>QA#41001　償却資産証明書の税額計算で課税標準額・税額が常に空白で表示される</h1>
+  <div class="sub">対象システム：固定資産税システム（△△市） ／ 画面・処理：証明書発行（評価証明書／公課証明書／償却資産証明書） ／ お客様：△△市 ／ 作成日：2026-08-19</div>
+</header>
+<main>
+
+<!-- ============ 0. エグゼクティブサマリ ============ -->
+<section>
+  <h2>0. エグゼクティブサマリ</h2>
+  <div class="meta">
+    <div class="k">QA番号</div><div>#41001</div>
+    <div class="k">件名</div><div>償却資産証明書の税額計算で課税標準額・税額が常に空白で表示される</div>
+    <div class="k">お客様 / 発生環境</div><div>△△市 / お客様環境-本番機</div>
+    <div class="k">画面・処理・帳票</div><div>証明書発行（評価証明書／公課証明書／償却資産証明書）</div>
+    <div class="k">発生リビジョン</div><div>1.0.210.310</div>
+    <div class="k">依頼区分 / 優先度</div><div>不具合 / 今すぐ</div>
+    <div class="k">事象</div><div>償却資産証明書（区分130）を発行すると課税標準額・税額が常に空白、件数欄が0件となる。同一処理の評価証明書・公課証明書（土地・家屋）は正しく算出・表示される。データ上は当該所有者に償却資産が存在するため、0件になるのは不自然。</div>
+    <div class="k">直接原因</div><div>件数取得ディスパッチ <code>func_get_kensu</code>（PKG_ZEI_CERT_CALC）に償却資産（03）の分岐がなく、常に0件を返す。件数0により <code>func_calc_zeigaku</code> が「課税対象なし」として税額0円を返し、<code>func_fmt_yen</code> が0を空欄表示するため税額（およびZERO_KENSU扱いの課税標準額）が空白になる。</div>
+    <div class="k">根本原因</div><div>償却資産証明書対応時に、対象区分リスト・評価額取得・課税標準算出・免税点判定は03対応されたが、件数取得SQLの分岐のみ未追加（旧実装の130分岐欠落をディスパッチ方式へ移行する際に引き継いだ）。未対応区分が「Wログ＋0件返却」のサイレントフォールバックと、03を除外した自己点検 <code>p_self_check</code> の両方に見逃され続けた。</div>
+    <div class="k">区分</div><div><span class="pill pill-bad">プログラム不具合</span></div>
+  </div>
+  <div class="box box-bad"><strong>結論：</strong>コードのバグ（プログラム不具合）。<code>func_get_kensu</code> に償却資産（03）の件数取得SQL分岐（新関数 <code>func_sql_cre_04_shoyaku</code>）を追加し、未対応区分のフォールバックを「サイレント0件」から明示エラーにすること。これにより件数・課税標準額・税額ともに正常に算出・表示される。データ・環境・仕様の問題ではない。</div>
+</section>
+
+<!-- ============ 1. 直接原因（プログラム観点） ============ -->
+<section>
+  <h2>1. 直接原因（プログラム観点）</h2>
+
+  <h3>1-1. 該当ソースコード（実コード引用）</h3>
+  <p class="filepath">examples/case_shinsa/src/01SQL/FUNCTION/PKG_ZEI_CERT_CALC.SQL（パッケージボディ、<code>func_get_kensu</code>：L132〜、該当分岐 L144〜157）</p>
+  <p>償却資産証明書（帳票区分<code>130</code>）発行時、<code>p_issue_certificate</code>（L368）→ <code>p_calc_shomeisho</code>（L298）→ <code>p_get_target_kbn_list</code>（L257、130 は正しく <code>['03'</code>（償却資産）を返す）→ <code>func_calc_one</code>（L283）→ <code>func_get_kensu(年度, '03')</code> の順で処理が進む。<code>func_get_kensu</code> 内の件数取得SQLディスパッチは<strong>土地（01）・家屋（02）の2区分のみの分岐</strong>であり、償却資産（03）はどの分岐にも当たらない。結果、アウト引数 <code>v_sql</code> が NULL のまま <code>IF v_sql IS NULL</code> に入ります。このとき例外を投げることも発行を止めることもなく、<strong>W（警告）ログを残すだけで「0件」として正常返却</strong>される。これが全件0件の直接原因である。</p>
+<pre class="before">    -- ★ 物件区分ごとに件数取得SQLを選択
+    IF i_kbn = C_KBN_TOCHI THEN
+      v_ret := func_sql_cre_02_tochi(v_tbl, v_sql);
+    ELSIF i_kbn = C_KBN_KAOKU THEN
+      v_ret := func_sql_cre_03_kaoku(v_tbl, v_sql);
+    END IF;                                    -- ← 償却資産（03）の分岐が存在しない（func_sql_cre_04_shoyaku なし）。v_sql は NULL のまま
+    -- ※ 上記以外（償却資産=03）のとき v_sql はNULLのまま
+
+    IF v_sql IS NULL THEN
+      -- 件数SQLが生成されなかった → 0件として返す
+      p_log('W', 'func_get_kensu: no count-sql for kbn=' || i_kbn);
+      RETURN 0;                               -- ← 未対応を「データなし（0件）」という正当な業務値として握りつぶし、発行処理は正常継続</pre>
+  <p>この「0件」が下流で税額を必ず0円にする。</p>
+<pre class="before">  FUNCTION func_calc_zeigaku(i_kbn IN VARCHAR2, i_kazei_hyo IN NUMBER, i_kensu IN PLS_INTEGER)
+    RETURN NUMBER IS
+    v_zei NUMBER := 0;
+  BEGIN
+    -- 件数が0の場合は課税対象なしとして0円
+    IF NVL(i_kensu,0) = 0 THEN
+      RETURN 0;                               -- ← 件数0ゲート：03は常に0件のため、ここから先の免税点判定・税率乗算は必ず実行されず税額は常に0円</pre>
+  <p>最後に <code>func_fmt_yen</code>（L351）が 0（および NULL）を空文字 <code>''</code> に変換するため、帳票上の税額欄は「常に空白」になる。件数欄は <code>TO_CHAR(0)</code> で「0件」と表示される。<code>p_calc_shomeisho</code>（L338〜340）は件数合計0に対し <code>o_status := 'ZERO_KENSU'</code> を立てており、パッケージ内コメントにも「件数0のときは課税標準額・税額とも空欄相当（0）となる」とある通り、0件化が帳票全体の空白表示に結びついている。</p>
+  <div class="box box-bad"><strong>問題点：</strong>
+  <ol>
+    <li><code>func_get_kensu</code>（L144〜149）の件数取得ディスパッチに償却資産（03）の分岐がない。件数取得関数自体が存在しない（土地 <code>func_sql_cre_02_tochi</code>、家屋 <code>func_sql_cre_03_kaoku</code> のみ、03相当の関数なし）。償却資産証明書は常に0件になる。</li>
+    <li>未対応区分のフォールバックが「Wログ＋<code>RETURN 0</code>」のサイレント処理（L153〜157）。仕様上の欠落が「データなし」という正当な業務値に化け、発行は正常（<code>o_result='ZERO_KENSU'</code>）として完了してしまうため、本番で検知されなかった。</li>
+    <li><code>func_calc_zeigaku</code>（L243〜245）の「件数0＝課税対象なし＝0円」ゲートが、03 の件数0をそのまま「税額0円」に確定させる。データが存在しても税額は常に0円→空白表示になる。</li>
+    <li>本パッケージ内では評価額取得 <code>func_sql_hyoka</code>（L117）・課税標準算出 <code>func_calc_kazei_hyojun</code>（L225）・免税点判定 <code>func_is_menzei</code>（L202）はいずれも 03 対応済みで、<strong>件数取得だけが03未対応</strong>という非対称が存在する（後述2-1）。</li>
+  </ol></div>
+
+  <h3>1-2. 処理フロー（任意：誤判定に至る流れ）</h3>
+  <div class="flow">
+    <span class="node">償却資産証明書発行（帳票130）／対象区分 = 03</span><span class="arrow">→</span>
+    <span class="node badnode">func_get_kensu('03')：分岐なし → v_sql NULL → 0件（Wログのみ）</span><span class="arrow">→</span>
+    <span class="node badnode">func_calc_zeigaku：件数0 → 税額0円</span><span class="arrow">→</span>
+    <span class="node">func_fmt_yen：0 → 空欄／件数「0件」／status=ZERO_KENSU</span>
+  </div>
+  <div class="box box-warn"><strong>残りの確認事項（課税標準額の空白について）：</strong>パッケージ単体のトレースでは、課税標準額 <code>func_calc_kazei_hyojun</code> は件数に依存せず評価額から算出される（03分岐あり）ため、<code>FIX_SHOKYAKU_年</code> テーブルに <code>HYOKA_GAKU</code> データがある限り非ゼロになる。本番で課税標準額も常に空白と観測されることは、①帳票表示層が <code>ZERO_KENSU</code>（件数0）時に課税標準額も空欄化する運用、または②償却資産テーブルの評価額カラム・値の問題のいずれかを疑わせる。修正適用後に課税標準額が復元されない場合は、表示層の空欄化ルールと <code>FIX_SHOKYAKU_年</code> のカラム定義・実データ（03 の行に <code>HYOKA_GAKU</code> が格納されているか）を要確認とする。</div>
+</section>
+
+<!-- ============ 2. 根本原因（設計・プロセス観点） ============ -->
+<section>
+  <h2>2. 根本原因（設計・プロセス観点）</h2>
+
+  <h3>2-1. なぜ発生したか</h3>
+  <ul>
+    <li><strong>物件区分の分岐対応が各関数ごとに個別管理され、追加漏れが構造上起こり得た：</strong>「物件区分（01/02/03）ごとに IF/ELSIF を書いて分岐する」実装方式において、新区分（または新帳票）を追加する場合は対象区分リスト・件数取得・評価額取得・課税標準算出・免税点判定の<strong>複数箇所に同期して分岐追加</strong>が必要になる。今回のコードは評価額取得（<code>func_sql_hyoka</code> L117）、課税標準算出（<code>func_calc_kazei_hyojun</code> L225）、免税点判定（<code>func_is_menzei</code> L202）に 03 分岐が存在し、<strong>件数取得（<code>func_get_kensu</code>）だけが漏れている</strong>。区分リストと各計算関数は03対応済みなのに対して、件数SQL生成関数群（<code>func_sql_cre_02_tochi</code>／<code>func_sql_cre_03_kaoku</code>）に03相当がなく、<code>func_get_kensu</code> に ELSIF がない。同期追加のチェック工程が存在しないため、この非対称がそのまま本番入りした。</li>
+    <li><strong>旧実装の欠落が移行（リファクタ）で引き継がれた：</strong>ボディ末尾のコメント（L590付近）によると、旧実装は「帳票種別ごとに件数SQLをハードコード」しており、評価証明書（110）・公課証明書（120）のみで「<strong>償却資産証明書(130)の分岐は当時から存在しなかった</strong>」。ディスパッチ方式に移行した際に件数取得側のこの欠落がそのまま引き継がれている（コメント自体が「件数取得(func_get_kensu)側の区分対応漏れは引き継がれている」と認めている）。つまり、欠落は移行時の退行（リグレッション）ではなく、<strong>移行前から存在した欠落を移行後も誰も埋めなかった</strong>ケースである。</li>
+    <li><strong>サイレントフォールバックが欠落を業務値に偽装した：</strong>未対応区分を例外で止めるのではなく「Wログ＋0件返却」に設計されているため、件数0は「当該所有者に償却資産が無い」という正常なケースと区別不能になる。下流の税額計算も「件数0＝課税対象なし」を正当な前提としており、証明書は正常ステータス（ZERO_KENSU）で発行完結する。欠陥が「エラー」ではなく「正常な0」に見える設計だったため、運用上も検知されなかった。</li>
+    <li><strong>自己点検 <code>p_self_check</code>（L625）が03を除外していた：</strong>整合性チェックは土地・家屋の2関数のみを検査対象とし、「※ 償却資産の件数取得関数はチェック対象に含まれていない」「本来はここで償却資産の未対応を検知できるはずだが」とコメントが認めている通り、<strong>検出できる仕組みが意図的に（または偶然に）03を除外</strong>していた。</li>
+  </ul>
+  <h3>2-2. なぜ事前に問題と判断されなかったか</h3>
+  <div class="box box-warn">① テスト対象帳票が評価証明書・公課証明書（土地・家屋）に偏っており、「償却資産証明書（130）＋データ有」のケースが存在しなかった。130を発行しても、その環境に償却資産データが無い所有者では「0件・空白」が仕様通りと見分けがつかないため、欠落が発見されなかった。② <code>p_self_check</code> が03を除外しているため、リリース時点の整合性チェックでも検出できなかった（110/120の分岐健全性しか確認されない）。③ 発行結果ステータス（ZERO_KENSU）の発生傾向を監視する運用が無く、03証明書で常に ZERO_KENSU が立つ異常も可視化されなかった。④ 件数0→税額0は下流の正当な設計（課税対象なし）と一致するため、個々の関数は単体で見ると「正しく」動作しており、結合して初めて顕在化するバグであった。</div>
+  <h3>2-3. 設計上の前提・業務仕様の誤認</h3>
+  <table>
+    <tr><th>観点</th><th>本来あるべき仕様</th><th>実装上の誤認</th></tr>
+    <tr><td>件数取得のカバレッジ</td><td>証明書で対象となり得る全物件区分（01土地／02家屋／03償却資産）について件数取得SQLが定義され、ディスパッチで網羅される</td><td>01・02のみ定義・分岐。03は件数取得関数自体が存在せず NULL→0件。対象区分リスト（130→03）と件数取得の対応表が非同期で管理されていた</td></tr>
+    <tr><td>未対応区分の扱い</td><td>仕様上あり得ない区分・未実装区分は明示エラー（またはNGコード）として発行を止め、原因を露出させる</td><td>Wログを残すだけで0件を正常返却。「0件＝データなし」という業務値に欠落が偽装され、下流がそのまま正当な0として処理</td></tr>
+    <tr><td>整合性セルフチェック</td><td>対象区分リストに含まれる全物件区分の件数取得SQL生成を検査する</td><td>検査対象が土地・家屋にハードコード。償却資産（03）の未対応を検知できない構造</td></tr>
+    <tr><td>空欄表示の意味</td><td>「データなしによる0」は表示上も検知・区別可能（ステータス表示や監査ログで確認できる）</td><td><code>func_fmt_yen</code> が0を空欄表示（「現状は空欄運用」）するため、帳票上はエラーと正規の0を区別できず、現場は「空白＝不自然」にしか見えない状態</td></tr>
+  </table>
+</section>
+
+<!-- ============ 3. 修正案（変更前後） ============ -->
+<section>
+  <h2>3. 修正案（変更前後）</h2>
+
+  <p>修正方針は <strong>「件数取得ディスパッチに償却資産（03）の件数取得SQL分岐を追加し、未対応区分のフォールバックをサイレント0から明示エラーに変更する」</strong>こと。</p>
+
+  <h3>3-1. 償却資産（03）の件数取得関数の追加とディスパッチ分岐の補完</h3>
+  <h4>(1) 変更前ロジック</h4>
+<pre class="before">  -- 件数取得SQL生成: 土地  → func_sql_cre_02_tochi（L65）
+  -- 件数取得SQL生成: 家屋  → func_sql_cre_03_kaoku（L86）
+  -- ※ 償却資産相当の関数（func_sql_cre_04_shoyaku）が存在しない
+
+  FUNCTION func_get_kensu(i_year IN NUMBER, i_kbn IN VARCHAR2)
+    ...
+    -- ★ 物件区分ごとに件数取得SQLを選択
+    IF i_kbn = C_KBN_TOCHI THEN
+      v_ret := func_sql_cre_02_tochi(v_tbl, v_sql);
+    ELSIF i_kbn = C_KBN_KAOKU THEN
+      v_ret := func_sql_cre_03_kaoku(v_tbl, v_sql);
+    END IF;
+    -- ※ 上記以外（償却資産=03）のとき v_sql はNULLのまま
+
+    IF v_sql IS NULL THEN
+      -- 件数SQLが生成されなかった → 0件として返す
+      p_log('W', 'func_get_kensu: no count-sql for kbn=' || i_kbn);
+      RETURN 0;
+    END IF;
+    ...</pre>
+  <h4>(2) 変更後ロジック</h4>
+<pre class="after">  ----------------------------------------------------------------------------
+  -- 件数取得SQL生成: 償却資産
+  --   償却資産番号単位でCOUNT
+  ----------------------------------------------------------------------------
+  FUNCTION func_sql_cre_04_shoyaku(i_tbl IN VARCHAR2, o_sql OUT VARCHAR2)
+    RETURN PLS_INTEGER IS
+    v_rtn PLS_INTEGER := 0;
+  BEGIN
+    o_sql := 'SELECT COUNT(*) FROM ' || i_tbl
+          || ' WHERE BUKKEN_KBN = ''' || C_KBN_SHOKYAKU || ''''
+          || '   AND SHOKEY_SASSET_BANGO IS NOT NULL';
+    RETURN v_rtn;
+  EXCEPTION WHEN OTHERS THEN
+    v_rtn := -1;
+    p_log('E', 'func_sql_cre_04_shoyaku: ' || SQLERRM);
+    RETURN v_rtn;
+  END func_sql_cre_04_shoyaku;
+
+  -- func_get_kensu 内のディスパッチ：03分岐を追加
+    IF i_kbn = C_KBN_TOCHI THEN
+      v_ret := func_sql_cre_02_tochi(v_tbl, v_sql);
+    ELSIF i_kbn = C_KBN_KAOKU THEN
+      v_ret := func_sql_cre_03_kaoku(v_tbl, v_sql);
+    ELSIF i_kbn = C_KBN_SHOKYAKU THEN
+      v_ret := func_sql_cre_04_shoyaku(v_tbl, v_sql);   -- ← 追加：償却資産の件数SQLを生成
+    END IF;</pre>
+
+  <h3>3-2. 未対応区分のフォールバックを明示エラーに変更（＋セルフチェックの03追加）</h3>
+  <h4>(1) 変更前ロジック</h4>
+<pre class="before">    IF v_sql IS NULL THEN
+      -- 件数SQLが生成されなかった → 0件として返す
+      p_log('W', 'func_get_kensu: no count-sql for kbn=' || i_kbn);
+      RETURN 0;
+    END IF;
+
+  -- p_self_check：検査対象が土地・家屋のみのため 03 の未対応は検出されない
+    -- 土地
+    v_ret := func_sql_cre_02_tochi('DUMMY', v_sql);
+    IF v_sql IS NULL THEN o_ng_cnt := o_ng_cnt + 1; END IF;
+    -- 家屋
+    v_ret := func_sql_cre_03_kaoku('DUMMY', v_sql);
+    IF v_sql IS NULL THEN o_ng_cnt := o_ng_cnt + 1; END IF;
+    -- ※ 償却資産の件数取得関数はチェック対象に含まれていない</pre>
+  <h4>(2) 変更後ロジック</h4>
+<pre class="after">    IF v_sql IS NULL THEN
+      -- 件数SQLが生成されなかった → 未対応区分として明示エラー（サイレント0にしない）
+      p_log('E', 'func_get_kensu: no count-sql for kbn=' || i_kbn);
+      RAISE_APPLICATION_ERROR(-20001,
+        'func_get_kensu: count SQL is undefined for kbn=' || i_kbn);
+    END IF;
+    -- 上位の p_calc_shomeisho は WHEN OTHERS で捕捉し o_status='ERROR' となるため、
+    -- 「0件・空白の正常発行」ではなく発行結果エラーとして露出する。
+
+  -- p_self_check：検査対象に償却資産を追加
+    -- 土地
+    v_ret := func_sql_cre_02_tochi('DUMMY', v_sql);
+    IF v_sql IS NULL THEN o_ng_cnt := o_ng_cnt + 1; END IF;
+    -- 家屋
+    v_ret := func_sql_cre_03_kaoku('DUMMY', v_sql);
+    IF v_sql IS NULL THEN o_ng_cnt := o_ng_cnt + 1; END IF;
+    -- 償却資産（追加）
+    v_ret := func_sql_cre_04_shoyaku('DUMMY', v_sql);
+    IF v_sql IS NULL THEN o_ng_cnt := o_ng_cnt + 1; END IF;</pre>
+
+  <div class="box box-good"><span class="pill pill-good">改善点</span>
+  <ul>
+    <li>償却資産（03）の件数が実データに基づいて算出されるため、<code>func_calc_zeigaku</code> の件数0ゲートが解除され、税額（および ZERO_KENSU 扱いによる空欄化の対象だった課税標準額の表示）が正常に算出・表示される。</li>
+    <li>今後は新たな物件区分を追加する際、件数SQL未定義の状態で発行を試みると 0 件という偽装値を返す代わりに <code>RAISE_APPLICATION_ERROR</code> → 発行結果 <code>ERROR</code> として即座に露出する（欠陥を「正当な0」に偽装させない防御）。</li>
+    <li><code>p_self_check</code> が全対象区分（01/02/03）をカバーするため、リリース時点の整合性チェックで同種の見逃しが検出可能になる。</li>
+    <li>土地・家屋の評価証明書・公課証明書は今回の変更で動作が一切変わらない（01/02 の経路は不変）ため、回帰リスクは低い。</li>
+  </ul></div>
+  <p class="note">※ 償却資産のキーカラム名（上記の <code>SHOKEY_SASSET_BANGO</code>）および件数カウント単位（連名・同一資産の複数行がある場合は名寄せ/重複排除の要否）は、<code>FIX_SHOKYAKU_年</code> の実際のテーブル定義・カラム定義に照合のうえ確定すること。免税点定数（償却 150,000）・税率（1.4%）は <code>func_is_menzei</code>／<code>func_calc_zeigaku</code> に既に03対応が存在するため変更不要。</p>
+</section>
+
+<!-- ============ 4. 再発防止策 ============ -->
+<section>
+  <h2>4. 再発防止策</h2>
+  <h3>4-1. プログラム</h3>
+  <table>
+    <tr><th>No</th><th>対策</th><th>目的</th></tr>
+    <tr><td>P-1</td><td>「件数SQLが生成されなかった（<code>v_sql IS NULL</code>）」経路を <code>RETURN 0</code> から <code>RAISE_APPLICATION_ERROR</code>（またはNGコード返却）へ変更し、発行結果が <code>ERROR</code> となるようにする（3-2実施）</td><td>未対応・不備を「正当な0件」という業務値に偽装させず、常に露出させる</td></tr>
+    <tr><td>P-2</td><td>物件区分別の「件数取得SQL生成が定義されているか」の検査を <code>p_self_check</code> が <code>p_get_target_kbn_list</code> の対象区分を走査する形に拡張し、リリースゲートで必須化（3-2実施）</td><td>区分追加時の分岐漏れをセルフチェックが自動検出する（ハードコードされた検査対象リストの非同期化を防ぐ）</td></tr>
+    <tr><td>P-3</td><td>物件区分・帳票種別を追加する開発チェックリストに「kbn 分岐を持つ全関数（件数取得／評価額取得／課税標準算出／免税点判定／セルフチェック）に新分岐が揃っているか」の突合項目を追加</td><td>設計・開発段階で「区分リストと計算関数の非対称」を作らせない</td></tr>
+    <tr><td>P-4</td><td>発行結果ステータス（特に <code>ZERO_KENSU</code>）の件数・区分別傾向をモニタリングし、データ存在所有者の証明書で0件が続出する場合はアラート</td><td>同種の問題が再発した場合でも運用レベルで早期検知する</td></tr>
+  </table>
+  <h3>4-2. テスト</h3>
+  <ul>
+    <li>回帰テスト（本件）：償却資産データが存在するファイチャで償却資産証明書（130）を発行し、<strong>件数&gt;0 かつ 課税標準額・税額が空欄でない</strong>ことをアサートする。</li>
+    <li>境界テスト：償却資産の評価額合計が免税点（150,000）未満のファイチャでは、<strong>件数&gt;0 かつ 税額0（正規の0）</strong>であることを確認し、「0件という不正な0」と区別可能であることを確認する。</li>
+    <li>回帰テスト（影響範囲）：評価証明書（110）・公課証明書（120）の土地・家屋の結果が修正前後で不変であることを確認する。</li>
+    <li>ユニットテスト：<code>func_get_kensu</code> に対し 01/02/03 各区分で生成されるSQLテキストと件数が正しく、03 相当が <code>func_sql_cre_04_shoyaku</code> を通ることをアサート。<code>p_self_check</code> は 03 を含む全区分をカバーし、健全な状態で <code>o_ng_cnt=0</code> となることをアサート。</li>
+  </ul>
+</section>
+
+<!-- ============ 5. 参照ソースファイル一覧 ============ -->
+<section>
+  <h2>5. 参照ソースファイル一覧</h2>
+  <table>
+    <tr><th>層</th><th>ファイル</th><th>役割／該当箇所</th></tr>
+    <tr><td>PL/SQL（パッケージボディ）</td><td class="filepath">examples/case_shinsa/src/01SQL/FUNCTION/PKG_ZEI_CERT_CALC.SQL</td><td>★直接原因 <code>func_get_kensu</code>（L132〜、ディスパッチ L144〜149／サイレント0件 L153〜157）／件数SQL生成関数 <code>func_sql_cre_02_tochi</code>（L65）・<code>func_sql_cre_03_kaoku</code>（L86）（03相当なし）／税額0円ゲート <code>func_calc_zeigaku</code>（L237〜、L243〜245）／0→空欄表示 <code>func_fmt_yen</code>（L351〜）／対象区分リスト <code>p_get_target_kbn_list</code>（L257〜、130→03 は L274 で正しく設定）／集計・ステータス <code>p_calc_shomeisho</code>（L298〜、ZERO_KENSU L338〜340）／セルフチェック <code>p_self_check</code>（L625〜、03 除外）／03対応済みの対照関数 <code>func_sql_hyoka</code>（L117）・<code>func_calc_kazei_hyojun</code>（L225）・<code>func_is_menzei</code>（L202）／エントリ <code>p_issue_certificate</code>（L368〜）</td></tr>
+    <tr><td>PL/SQL（パッケージ仕様）</td><td class="filepath">examples/case_shinsa/src/01SQL/FUNCTION/PKG_ZEI_CERT_CALC_SPEC.SQL</td><td>公開インターフェース定義（<code>p_issue_certificate</code>／<code>p_calc_shomeisho</code>／<code>p_batch_issue</code>／<code>p_self_check</code> 等）</td></tr>
+  </table>
+  <p class="note">※ ソースコードの文字コード（Shift-JIS 等）・行番号・カラム定義は調査時点のもの。最終確定時はテーブル定義書・設計書と照合のうえ確認すること。</p>
+</section>
+
+</main>
+<footer>障害解析報告書 QA#41001 ／ 固定資産税システム（△△市） ／ 自動生成（要レビュー）</footer>
+</body>
+</html>
